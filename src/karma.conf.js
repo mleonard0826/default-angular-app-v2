@@ -2,6 +2,8 @@
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
 module.exports = function (config) {
+  const reportportalConfig = require('./../reportportalConf');
+  const AgentJasmine = require('agent-js-jasmine');
   config.set({
     basePath: '',
     frameworks: ['jasmine', '@angular-devkit/build-angular'],
@@ -10,7 +12,9 @@ module.exports = function (config) {
       require('karma-chrome-launcher'),
       require('karma-jasmine-html-reporter'),
       require('karma-coverage-istanbul-reporter'),
-      require('@angular-devkit/build-angular/plugins/karma')
+      require('@angular-devkit/build-angular/plugins/karma'),
+      require('agent-js-jasmine'),
+      require('./../reportportalConf')
     ],
     client: {
       clearContext: false // leave Jasmine Spec Runner output visible in browser
@@ -26,6 +30,14 @@ module.exports = function (config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     browsers: ['Chrome'],
-    singleRun: false
+    singleRun: false,
+    agent: new AgentJasmine(reportportalConfig),
+    onPrepare() {
+        require('ts-node').register({
+            project: require('path').join(__dirname, './tsconfig.e2e.json')
+        });
+        jasmine.addReporter(agent.getJasmineReporter());
+        afterAll((done) => agent.getPromiseFinishAllItems(agent.tempLaunchId).then(()=> done()));
+    }
   });
 };
